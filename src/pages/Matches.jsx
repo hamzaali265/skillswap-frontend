@@ -7,8 +7,9 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import Badge from '../components/ui/Badge';
+import Rating from '../components/ui/Rating';
 import Input from '../components/ui/Input';
-import { calculateMatchPercentage, getCommonSkills, formatDate } from '../utils/helpers';
+import { getCommonSkills, formatDate } from '../utils/helpers';
 
 const Matches = () => {
   const { user } = useAuth();
@@ -50,15 +51,16 @@ const Matches = () => {
     matchPercentage: otherUser.matchPercentage || 0
   }));
 
-  const getMatchPercentage = (otherUser) => {
-    if (!user || !otherUser) return 0;
-    return calculateMatchPercentage(user, otherUser);
-  };
+  // Remove local calculation functions since we're using API-provided matchPercentage
+  // const getMatchPercentage = (otherUser) => {
+  //   if (!user || !otherUser) return 0;
+  //   return calculateMatchPercentage(user, otherUser);
+  // };
 
-  const getCommonSkillsForUser = (otherUser) => {
-    if (!user || !otherUser) return [];
-    return getCommonSkills(user, otherUser);
-  };
+  // const getCommonSkillsForUser = (otherUser) => {
+  //   if (!user || !otherUser) return [];
+  //   return getCommonSkills(user, otherUser);
+  // };
 
   if (loading || !user) {
     return (
@@ -149,8 +151,8 @@ const Matches = () => {
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {processedUsers.map((otherUser) => {
-            const matchPercentage = getMatchPercentage(otherUser);
-            const commonSkills = getCommonSkillsForUser(otherUser);
+            const matchPercentage = otherUser.matchPercentage;
+            const commonSkills = getCommonSkills(user, otherUser);
             
             return (
               <Card key={otherUser.id} className="p-6 hover:shadow-card-hover transition-all duration-200">
@@ -171,6 +173,18 @@ const Matches = () => {
                     >
                       {matchPercentage}% match
                     </Badge>
+                  </div>
+                  
+                  {/* Rating Display */}
+                  <div className="mt-2 flex items-center justify-center">
+                    <Rating 
+                      value={otherUser.averageRating || 0} 
+                      readonly 
+                      size="sm"
+                    />
+                    <span className="text-xs text-gray-600 ml-1">
+                      ({otherUser.ratingCount || 0})
+                    </span>
                   </div>
                 </div>
 
@@ -254,8 +268,8 @@ const Matches = () => {
       ) : (
         <div className="space-y-4">
           {processedUsers.map((otherUser) => {
-            const matchPercentage = getMatchPercentage(otherUser);
-            const commonSkills = getCommonSkillsForUser(otherUser);
+            const matchPercentage = otherUser.matchPercentage;
+            const commonSkills = getCommonSkills(user, otherUser);
             
             return (
               <Card key={otherUser.id} className="p-6 hover:shadow-card-hover transition-all duration-200">
@@ -283,11 +297,17 @@ const Matches = () => {
                     <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 mr-1" />
-                        {otherUser.location || 'No location'}
+                        {otherUser.location}
                       </div>
                       <div className="flex items-center">
-                        <Star className="w-4 h-4 mr-1" />
-                        {otherUser.matchPercentage || 0}% match
+                        <Rating 
+                          value={otherUser.averageRating || 0} 
+                          readonly 
+                          size="sm"
+                        />
+                        <span className="text-xs text-gray-600 ml-1">
+                          ({otherUser.ratingCount || 0})
+                        </span>
                       </div>
                     </div>
 

@@ -7,7 +7,8 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import Badge from '../components/ui/Badge';
-import { calculateMatchPercentage, getCommonSkills, formatDate } from '../utils/helpers';
+import Rating from '../components/ui/Rating';
+import { formatDate } from '../utils/helpers';
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -16,6 +17,10 @@ const UserProfile = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userRating, setUserRating] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [ratingCount, setRatingCount] = useState(0);
+  const [hasRated, setHasRated] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -28,6 +33,12 @@ const UserProfile = () => {
         if (response.data) {
           console.log('Setting user profile data:', response.data);
           setUserProfile(response.data);
+          
+          // Set rating data from API response
+          setAverageRating(response.data.averageRating || 0);
+          setRatingCount(response.data.ratingCount || 0);
+          setUserRating(response.data.userRating || 0);
+          setHasRated(!!response.data.userRating);
         } else {
           console.error('No data in response');
           setError('User not found');
@@ -54,14 +65,48 @@ const UserProfile = () => {
     navigate(`/chat/${id}`);
   };
 
+  const handleRating = async (rating) => {
+    try {
+      console.log('Submitting rating:', rating, 'for user:', id);
+      const response = await apiService.submitRating(id, rating);
+      console.log('Rating submission response:', response);
+      
+      if (response.data) {
+        setUserRating(rating);
+        setHasRated(true);
+        setAverageRating(response.data.averageRating);
+        setRatingCount(response.data.ratingCount);
+        console.log('Rating submitted successfully');
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      // You could add a toast notification here
+    }
+  };
+
+  // Use API-provided data instead of local calculations
   const getMatchPercentage = () => {
-    if (!currentUser || !userProfile) return 0;
-    return calculateMatchPercentage(currentUser, userProfile);
+    const percentage = userProfile?.matchPercentage || 0;
+    console.log('Match percentage from API:', percentage);
+    return percentage;
   };
 
   const getCommonSkillsForUser = () => {
-    if (!currentUser || !userProfile) return [];
-    return getCommonSkills(currentUser, userProfile);
+    const skills = userProfile?.matchingSkills || [];
+    console.log('Common skills from API:', skills);
+    return skills;
+  };
+
+  const getICanHelpWith = () => {
+    const skills = userProfile?.iCanHelpThem || [];
+    console.log('I can help with from API:', skills);
+    return skills;
+  };
+
+  const getTheyCanHelpWith = () => {
+    const skills = userProfile?.theyCanHelpMe || [];
+    console.log('They can help with from API:', skills);
+    return skills;
   };
 
   if (loading) {
@@ -105,9 +150,6 @@ const UserProfile = () => {
     return null;
   }
 
-  const matchPercentage = getMatchPercentage();
-  const commonSkills = getCommonSkillsForUser();
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -139,34 +181,69 @@ const UserProfile = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Profile Card */}
           <Card>
-            <div className="text-center mb-6">
+            <div className="flex items-start space-x-4">
               <Avatar 
                 src={userProfile.avatar} 
                 alt={userProfile.name} 
                 size="xl" 
-                status={userProfile.isOnline ? 'online' : 'offline'}
-                className="mx-auto mb-4"
+                className="flex-shrink-0"
               />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{userProfile.name}</h2>
-              <p className="text-gray-600 mb-4">{userProfile.bio || 'No bio available'}</p>
               
-              <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 mb-4">
-                <div className="flex items-center">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {userProfile.location || 'No location'}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">{userProfile.name}</h2>
+                    <p className="text-gray-600">{userProfile.bio || 'No bio available'}</p>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  Member since {formatDate(userProfile.createdAt)}
+                
+                <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {userProfile.location || 'No location'}
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    Member since {formatDate(userProfile.createdAt)}
+                  </div>
+                </div>
+
+                {/* Rating Display - Only show here */}
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Rating 
+                      value={averageRating} 
+                      readonly 
+                      size="sm"
+                    />
+                    <span className="text-sm text-gray-600">
+                      {averageRating.toFixed(1)} ({ratingCount} {ratingCount === 1 ? 'review' : 'reviews'})
+                    </span>
+                  </div>
+                  
+                  {!hasRated && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">Rate this profile:</span>
+                      <Rating 
+                        value={userRating} 
+                        onChange={handleRating}
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                  
+                  {hasRated && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">Your rating:</span>
+                      <Rating 
+                        value={userRating} 
+                        readonly 
+                        size="sm"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-
-              <Badge 
-                variant={matchPercentage >= 80 ? 'success' : matchPercentage >= 60 ? 'warning' : 'info'} 
-                size="lg"
-              >
-                {matchPercentage}% match
-              </Badge>
             </div>
           </Card>
 
@@ -229,15 +306,15 @@ const UserProfile = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Match Details</h3>
             <div className="space-y-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary-600 mb-2">{matchPercentage}%</div>
+                <div className="text-3xl font-bold text-primary-600 mb-2">{getMatchPercentage()}%</div>
                 <p className="text-gray-600">Compatibility Match</p>
               </div>
               
-              {commonSkills.length > 0 && (
+              {getCommonSkillsForUser().length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Common Skills</h4>
                   <div className="flex flex-wrap gap-1">
-                    {commonSkills.map((skill) => (
+                    {getCommonSkillsForUser().map((skill) => (
                       <Badge key={skill} variant="default" size="sm">
                         {skill}
                       </Badge>
@@ -246,11 +323,11 @@ const UserProfile = () => {
                 </div>
               )}
 
-              {userProfile.iCanHelpThem && userProfile.iCanHelpThem.length > 0 && (
+              {getICanHelpWith().length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">I Can Help With</h4>
                   <div className="flex flex-wrap gap-1">
-                    {userProfile.iCanHelpThem.map((skill) => (
+                    {getICanHelpWith().map((skill) => (
                       <Badge key={skill} variant="offered" size="sm">
                         {skill}
                       </Badge>
@@ -259,11 +336,11 @@ const UserProfile = () => {
                 </div>
               )}
 
-              {userProfile.theyCanHelpMe && userProfile.theyCanHelpMe.length > 0 && (
+              {getTheyCanHelpWith().length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 mb-2">They Can Help With</h4>
                   <div className="flex flex-wrap gap-1">
-                    {userProfile.theyCanHelpMe.map((skill) => (
+                    {getTheyCanHelpWith().map((skill) => (
                       <Badge key={skill} variant="wanted" size="sm">
                         {skill}
                       </Badge>

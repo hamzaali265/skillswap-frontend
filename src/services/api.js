@@ -190,6 +190,44 @@ class ApiService {
     });
     return this.handleResponse(response);
   }
+
+  // Rating APIs
+  async submitRating(ratedUserId, rating, comment = null) {
+    console.log('⭐ API submitRating called with:', { ratedUserId, rating, comment });
+    const response = await fetch(`${this.baseURL}/rating`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ ratedUserId, rating, comment }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getUserRating(userId) {
+    console.log('⭐ API getUserRating called with userId:', userId);
+    const response = await fetch(`${this.baseURL}/rating/${userId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getUserRatings(userId, page = 1, limit = 10) {
+    console.log('⭐ API getUserRatings called with:', { userId, page, limit });
+    const response = await fetch(`${this.baseURL}/rating/${userId}/reviews?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async deleteRating(ratingId) {
+    console.log('🗑️ API deleteRating called with ratingId:', ratingId);
+    const response = await fetch(`${this.baseURL}/rating/${ratingId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
 }
 
 export default new ApiService();
