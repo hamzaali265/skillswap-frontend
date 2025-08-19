@@ -2,231 +2,217 @@ const API_BASE_URL = 'http://localhost:5003/api';
 
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5003/api';
   }
 
-  // Helper method to get auth headers
+  // Get auth headers
   getAuthHeaders() {
-    const token = localStorage.getItem('skillswap_token');
-    console.log('🔑 getAuthHeaders - token from localStorage:', token);
-
     const headers = {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
     };
-
-    console.log('📌 getAuthHeaders - final headers:', headers);
+    
+    // Get token from localStorage
+    const token = localStorage.getItem('skillswap_token');
+    console.log('🔑 getAuthHeaders - token from localStorage:', token ? 'Token exists' : 'No token');
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔑 getAuthHeaders - Authorization header set');
+    } else {
+      console.log('🔑 getAuthHeaders - No token found, skipping Authorization header');
+    }
+    
     return headers;
   }
 
-  // Helper method to handle API responses
-  async handleResponse(response) {
-    const data = await response.json().catch(() => ({}));
+  // Generic request method
+  async request(endpoint, options = {}) {
+    const url = `${this.baseUrl}${endpoint}`;
+    const config = {
+      headers: this.getAuthHeaders(),
+      ...options,
+    };
 
-    if (!response.ok) {
-      console.error(
-        `❌ API error - status: ${response.status}, data:`,
-        data
-      );
-      throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    console.log(`🌐 Making request to: ${url}`);
+    console.log(`🌐 Request config:`, { method: config.method || 'GET', headers: config.headers });
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      console.log(`🌐 Response status: ${response.status}`);
+      console.log(`🌐 Response data:`, data);
+
+      if (!response.ok) {
+        const errorMessage = data.error || data.message || `HTTP error! status: ${response.status}`;
+        console.error(`❌ API request failed for ${endpoint}:`, errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      return data;
+    } catch (error) {
+      console.error(`❌ API request failed for ${endpoint}:`, error);
+      throw error;
     }
-
-    return data;
   }
 
-  // Authentication APIs
-  async register(formData) {
-    console.log('📨 API register called with FormData:');
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-  
-    const response = await fetch(`${this.baseURL}/auth/register`, {
-      method: 'POST',
-      body: formData, // ✅ send FormData directly
-      // ❌ do not set Content-Type manually, fetch will handle multipart boundaries
-    });
-  
-    return this.handleResponse(response);
-  }
-  
+  // Auth methods
   async login(credentials) {
-    console.log('📨 API login called with:', credentials);
-    const response = await fetch(`${this.baseURL}/auth/login`, {
+    return this.request('/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     });
-    return this.handleResponse(response);
+  }
+
+  async register(userData) {
+    return this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
   }
 
   async verifyToken() {
-    const headers = this.getAuthHeaders();
-    console.log('🔍 verifyToken - calling with headers:', headers);
-
-    const response = await fetch(`${this.baseURL}/auth/verify`, {
-      method: 'GET',
-      headers,
-    });
-
-    console.log('🔍 verifyToken - response status:', response.status);
-    return this.handleResponse(response);
+    return this.request('/auth/verify');
   }
 
   async logout() {
-    console.log('🚪 API logout called');
-    const response = await fetch(`${this.baseURL}/auth/logout`, {
+    return this.request('/auth/logout', {
       method: 'POST',
-      headers: this.getAuthHeaders(),
     });
-    return this.handleResponse(response);
   }
 
-  // Profile APIs
   async getProfile() {
-    console.log('👤 API getProfile called');
-    const response = await fetch(`${this.baseURL}/profile`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
+    return this.request('/profile');
   }
 
-  async updateProfile(profileData) {
-    console.log('📝 API updateProfile called with:', profileData);
-    const response = await fetch(`${this.baseURL}/profile`, {
+  // Get other user's profile (if endpoint exists)
+  async getOtherUserProfile(userId) {
+    return this.request(`/profile/${userId}`);
+  }
+
+  // User methods
+  async getUsers(filters = {}) {
+    const queryParams = new URLSearchParams(filters).toString();
+    const endpoint = queryParams ? `/users?${queryParams}` : '/users';
+    return this.request(endpoint);
+  }
+
+  async updateProfile(userData) {
+    return this.request('/profile', {
       method: 'PUT',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(profileData),
+      body: JSON.stringify(userData),
     });
-    return this.handleResponse(response);
   }
 
+  // Profile skills methods
   async addOfferedSkill(skillData) {
-    console.log('➕ API addOfferedSkill called with:', skillData);
-    const response = await fetch(`${this.baseURL}/profile/skills/offered`, {
+    return this.request('/profile/skills/offered', {
       method: 'POST',
-      headers: this.getAuthHeaders(),
       body: JSON.stringify(skillData),
     });
-    return this.handleResponse(response);
   }
 
   async deleteOfferedSkill(skillId) {
-    console.log('🗑️ API deleteOfferedSkill called with id:', skillId);
-    const response = await fetch(`${this.baseURL}/profile/skills/offered/${skillId}`, {
+    return this.request(`/profile/skills/offered/${skillId}`, {
       method: 'DELETE',
-      headers: this.getAuthHeaders(),
     });
-    return this.handleResponse(response);
   }
 
   async addWantedSkill(skillData) {
-    console.log('➕ API addWantedSkill called with:', skillData);
-    const response = await fetch(`${this.baseURL}/profile/skills/wanted`, {
+    return this.request('/profile/skills/wanted', {
       method: 'POST',
-      headers: this.getAuthHeaders(),
       body: JSON.stringify(skillData),
     });
-    return this.handleResponse(response);
   }
 
   async deleteWantedSkill(skillId) {
-    console.log('🗑️ API deleteWantedSkill called with id:', skillId);
-    const response = await fetch(`${this.baseURL}/profile/skills/wanted/${skillId}`, {
+    return this.request(`/profile/skills/wanted/${skillId}`, {
       method: 'DELETE',
-      headers: this.getAuthHeaders(),
     });
-    return this.handleResponse(response);
   }
 
-  // Matching APIs
+  // Get user skills (if you have a specific endpoint for this)
+  async getUserSkills(userId) {
+    return this.request(`/profile/skills`);
+  }
+
+  // Match methods
   async getMatches() {
-    console.log('🔍 API getMatches called');
-    const response = await fetch(`${this.baseURL}/match`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
+    return this.request('/match');
   }
 
-  async getMatchDetails(userId) {
-    console.log('🔍 API getMatchDetails called with userId:', userId);
-    console.log('🔍 API getMatchDetails URL:', `${this.baseURL}/match/${userId}`);
-    const response = await fetch(`${this.baseURL}/match/${userId}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-    console.log('🔍 API getMatchDetails response status:', response.status);
-    const result = await this.handleResponse(response);
-    console.log('🔍 API getMatchDetails result:', result);
-    return result;
+  // Alternative method to try different endpoints
+  async getMatchesAlternative() {
+    try {
+      return await this.request('/match');
+    } catch (error) {
+      console.log('⚠️ /match failed, trying /matches...');
+      try {
+        return await this.request('/matches');
+      } catch (error2) {
+        console.log('⚠️ /matches failed, trying /users...');
+        return await this.request('/users');
+      }
+    }
   }
 
-  // Chat APIs
+  // Rating methods
+  async submitRating(userId, rating, comment) {
+    const commentText = comment || '';
+    return this.request('/rating', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId,
+        rating,
+        comment: commentText,
+      }),
+    });
+  }
+
+  // async getUserRating(userId) {
+  //   return this.request(`/rating/${userId}`);
+  // }
+
+  // Chat methods (kept for compatibility, but Supabase handles real-time)
   async getConversations() {
-    console.log('💬 API getConversations called');
-    const response = await fetch(`${this.baseURL}/chat/conversations`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
+    try {
+      return this.request('/chat/conversations');
+    } catch (error) {
+      console.error('❌ Error fetching conversations:', error);
+      throw error;
+    }
   }
 
-  async getChatHistory(userId) {
-    console.log('💬 API getChatHistory called with userId:', userId);
-    const response = await fetch(`${this.baseURL}/chat/history/${userId}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
+  async getChatHistory(conversationId) {
+    try {
+      return this.request(`/chat/conversations/${conversationId}/messages`);
+    } catch (error) {
+      console.error('❌ Error fetching chat history:', error);
+      throw error;
+    }
   }
 
-  async markMessagesAsRead(userId) {
-    console.log('✅ API markMessagesAsRead called with userId:', userId);
-    const response = await fetch(`${this.baseURL}/chat/mark-read/${userId}`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
+  async markMessagesAsRead(conversationId) {
+    try {
+      return this.request(`/chat/conversations/${conversationId}/read`, {
+        method: 'PUT',
+      });
+    } catch (error) {
+      console.error('❌ Error marking messages as read:', error);
+      throw error;
+    }
   }
 
-  // Rating APIs
-  async submitRating(ratedUserId, rating, comment = null) {
-    console.log('⭐ API submitRating called with:', { ratedUserId, rating, comment });
-    const response = await fetch(`${this.baseURL}/rating`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ ratedUserId, rating, comment }),
-    });
-    return this.handleResponse(response);
-  }
-
-  async getUserRating(userId) {
-    console.log('⭐ API getUserRating called with userId:', userId);
-    const response = await fetch(`${this.baseURL}/rating/${userId}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
-  }
-
-  async getUserRatings(userId, page = 1, limit = 10) {
-    console.log('⭐ API getUserRatings called with:', { userId, page, limit });
-    const response = await fetch(`${this.baseURL}/rating/${userId}/reviews?page=${page}&limit=${limit}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
-  }
-
-  async deleteRating(ratingId) {
-    console.log('🗑️ API deleteRating called with ratingId:', ratingId);
-    const response = await fetch(`${this.baseURL}/rating/${ratingId}`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
+  async sendMessage(conversationId, message) {
+    try {
+      return this.request(`/chat/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content: message }),
+      });
+    } catch (error) {
+      console.error('❌ Error sending message:', error);
+      throw error;
+    }
   }
 }
 

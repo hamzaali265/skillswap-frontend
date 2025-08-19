@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit, Save, X, Plus, MapPin, Star, Users, Calendar } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useApp } from '../contexts/AppContext';
 import apiService from '../services/api';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -10,7 +11,12 @@ import Input from '../components/ui/Input';
 import { availableSkills } from '../types';
 
 const Profile = () => {
-  const { user, updateProfile, refreshUserData, loading } = useAuth();
+  const { user: authUser, updateProfile, refreshUserData, loading } = useAuth();
+  const { currentUser: appUser, updateCurrentUser } = useApp();
+  
+  // Use the most current user data (prefer appUser if available, fallback to authUser)
+  const user = appUser || authUser;
+  
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     name: user?.name || '',
@@ -33,6 +39,32 @@ const Profile = () => {
   console.log('Profile component - Current editData:', editData);
   console.log('Profile component - isEditing:', isEditing);
 
+  // Function to refresh current user data from profile API
+  const refreshCurrentUserData = async () => {
+    try {
+      console.log('🔄 Refreshing current user data from profile API...');
+      const profileResponse = await apiService.getProfile();
+      console.log('✅ Profile API response:', profileResponse);
+      
+      if (profileResponse.data) {
+        const updatedUser = {
+          ...user,
+          ...profileResponse.data,
+          skillsOffered: profileResponse.data.skillsOffered || [],
+          skillsWanted: profileResponse.data.skillsWanted || []
+        };
+        
+        console.log('✅ Updated user with profile data:', updatedUser);
+        updateCurrentUser(updatedUser);
+        
+        // Also update the auth context
+        await refreshUserData();
+      }
+    } catch (error) {
+      console.error('❌ Failed to refresh current user data:', error);
+    }
+  };
+
   // Update editData when user changes (but only when not editing)
   useEffect(() => {
     if (!isEditing && user) {
@@ -48,6 +80,12 @@ const Profile = () => {
     }
   }, [user, isEditing]);
 
+  // Refresh current user data when component mounts
+  useEffect(() => {
+    console.log('Profile component mounted, refreshing current user data...');
+    refreshCurrentUserData();
+  }, []);
+
   const handleSave = async () => {
     try {
       console.log('Saving profile data:', editData);
@@ -56,6 +94,7 @@ const Profile = () => {
       // Refresh user data to get the latest from backend
       console.log('Refreshing user data after save...');
       await refreshUserData();
+      await refreshCurrentUserData();
       console.log('User data refreshed after save');
       
       setIsEditing(false);
@@ -150,6 +189,7 @@ const Profile = () => {
       if (updatedProfile.data) {
         console.log('Refreshing user data with fresh profile...');
         await refreshUserData();
+        await refreshCurrentUserData();
         console.log('User data refreshed successfully');
         setSkillSuccess(`${skill.name} added successfully!`);
       } else {
@@ -209,6 +249,7 @@ const Profile = () => {
       if (updatedProfile.data) {
         console.log('Refreshing user data after removal...');
         await refreshUserData();
+        await refreshCurrentUserData();
         console.log('User data refreshed successfully after removal');
       } else {
         console.error('No data in updatedProfile response after removal');
@@ -272,7 +313,7 @@ const Profile = () => {
           {!isEditing && (
             <>
               <Button
-                onClick={refreshUserData}
+                onClick={refreshCurrentUserData}
                 variant="outline"
                 size="sm"
                 disabled={loading}

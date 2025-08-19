@@ -1,106 +1,26 @@
-# SkillSwap - React Frontend
+# SkillSwap Frontend
 
-A modern, responsive React web application for SkillSwap - a micro skill-trading platform where developers can exchange skills.
+A modern React application for the SkillSwap platform, where developers can exchange skills and connect with each other.
 
 ## 🚀 Features
 
-### Core Functionality
-- **User Authentication** - Login/Register with JWT token management
-- **Profile Management** - Edit profile, manage skills offered/wanted
-- **Matchmaking System** - Find users with complementary skills
-- **Real-time Chat** - Modern chat interface with message bubbles
-- **Dashboard** - Overview of matches, stats, and recent activity
+- **User Authentication** - Secure login and registration
+- **User Profiles** - Detailed profiles with skills offered and wanted
+- **Skill Matching** - Find users based on skill compatibility
+- **Real-time Chat** - Instant messaging powered by Supabase Realtime
+- **Rating System** - Rate and review other users
+- **Responsive Design** - Modern UI built with Tailwind CSS
 
-### UI/UX Features
-- **Responsive Design** - Mobile-first approach with breakpoint optimization
-- **Modern Design System** - Custom Tailwind CSS with consistent components
-- **Smooth Animations** - Hover effects, transitions, and micro-interactions
-- **Loading States** - Skeleton loaders and loading spinners
-- **Toast Notifications** - Success/error feedback with React Hot Toast
+## 🛠️ Tech Stack
 
-### Technical Features
-- **State Management** - Context API + useReducer for global state
-- **Custom Hooks** - Reusable authentication and API hooks
-- **Form Validation** - React Hook Form with comprehensive validation
-- **Mock API** - Simulated backend with realistic data
-- **Real-time Simulation** - WebSocket-like behavior for chat
-
-## 🛠 Tech Stack
-
-- **React 18** - Latest React with modern features
-- **Tailwind CSS** - Utility-first CSS framework with custom design system
-- **React Router v6** - Client-side routing
-- **React Hook Form** - Form handling and validation
-- **Lucide React** - Beautiful, customizable icons
-- **React Hot Toast** - Toast notifications
+- **React 18** - Modern React with hooks
 - **Vite** - Fast build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **React Router** - Client-side routing
+- **Supabase** - Real-time database and authentication
+- **Context API** - State management
 
-## 📁 Project Structure
-
-```
-src/
-├── components/
-│   ├── ui/                 # Reusable UI components
-│   │   ├── Button.jsx
-│   │   ├── Card.jsx
-│   │   ├── Input.jsx
-│   │   ├── Avatar.jsx
-│   │   ├── Badge.jsx
-│   │   └── LoadingSpinner.jsx
-│   ├── layout/             # Layout components
-│   │   ├── Header.jsx
-│   │   └── Layout.jsx
-│   └── features/           # Feature-specific components
-│       ├── auth/
-│       │   ├── LoginForm.jsx
-│       │   └── RegisterForm.jsx
-│       ├── profile/
-│       ├── matches/
-│       └── chat/
-├── contexts/
-│   └── AppContext.jsx      # Global state management
-├── hooks/
-│   ├── useAuth.js          # Authentication logic
-│   └── useApi.js           # API calls and mock data
-├── types/
-│   └── index.js            # Data structures and mock data
-├── utils/
-│   └── helpers.js          # Utility functions
-├── pages/                  # Page components
-│   ├── Dashboard.jsx
-│   ├── Matches.jsx
-│   ├── Chat.jsx
-│   └── Profile.jsx
-├── App.jsx                 # Main app component
-└── main.jsx               # Entry point
-```
-
-## 🎨 Design System
-
-### Colors
-- **Primary**: Indigo gradient (#6366F1 to #4338CA)
-- **Secondary**: Orange, Yellow, Green, Blue, Pink variants
-- **Gray Scale**: 50-900 range for text and backgrounds
-
-### Components
-- **Buttons**: Primary, secondary, ghost, outline, danger variants
-- **Cards**: Default, compact, glass, gradient variants
-- **Badges**: Default, offered, wanted, success, warning, error, info
-- **Inputs**: Text inputs with validation states and icons
-- **Avatars**: User avatars with online status indicators
-
-### Typography
-- **Font**: Inter (Google Fonts)
-- **Weights**: 400, 500, 600, 700
-- **Sizes**: Responsive text sizing with Tailwind classes
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 16+ 
-- npm or yarn
-
-### Installation
+## 📦 Installation
 
 1. **Clone the repository**
    ```bash
@@ -113,101 +33,71 @@ src/
    npm install
    ```
 
-3. **Start development server**
+3. **Set up environment variables**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_URL=http://localhost:5003/api
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. **Start the development server**
    ```bash
    npm run dev
    ```
 
-4. **Open in browser**
-   ```
-   http://localhost:3000
-   ```
+## 🗄️ Supabase Setup
 
-### Available Scripts
+The chat system requires Supabase to be properly configured. See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for detailed setup instructions.
+
+### Quick Setup:
+1. Create a Supabase project
+2. Run the SQL scripts in the Supabase SQL Editor
+3. Enable Row Level Security and Realtime
+4. Add your Supabase credentials to `.env`
+
+## 🏗️ Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── features/       # Feature-specific components
+│   │   ├── auth/       # Authentication components
+│   │   └── layout/     # Layout components
+│   └── ui/            # Base UI components
+├── contexts/           # React Context providers
+├── hooks/             # Custom React hooks
+├── pages/             # Page components
+├── services/          # API and external services
+├── types/             # TypeScript type definitions
+└── utils/             # Utility functions
+```
+
+## 🔧 Available Scripts
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-## 🔐 Authentication
-
-The app uses mock authentication for development:
-
-### Login Credentials
-- **Email**: Any valid email format
-- **Password**: Any password (6+ characters)
-
-### Features
-- JWT token simulation
-- Protected routes
-- Automatic redirects
-- Persistent login state
-
-## 📱 Responsive Design
-
-### Breakpoints
-- **Mobile**: < 640px
-- **Tablet**: 640px - 1024px
-- **Desktop**: > 1024px
-
-### Mobile Features
-- Hamburger menu navigation
-- Touch-friendly interactions
-- Optimized chat interface
-- Responsive card layouts
-
-## 🎯 Key Features Explained
-
-### Matchmaking Algorithm
-- Calculates match percentage based on skill compatibility
-- Considers skills offered vs skills wanted
-- Shows common skills between users
-- Filters by skill category and level
+## 🌟 Key Features
 
 ### Real-time Chat
-- Simulated real-time messaging
-- Message timestamps and read receipts
-- Online status indicators
-- Mobile-responsive chat interface
+- **Supabase Realtime** - Instant message delivery
+- **Message History** - Persistent chat history
+- **Read Receipts** - Track message read status
+- **Typing Indicators** - Real-time typing feedback
 
-### Profile Management
-- Edit personal information
-- Add/remove skills with search
-- Skill level management
-- Profile completion tracking
+### User Management
+- **Profile Management** - Update skills and preferences
+- **Skill Matching** - Find compatible users
+- **Rating System** - Rate and review other users
 
-## 🧪 Mock Data
-
-The app includes comprehensive mock data:
-
-- **20+ Sample Users** with diverse skills and locations
-- **Various Skill Combinations** across different categories
-- **Realistic Chat Conversations** with timestamps
-- **Match Scenarios** with different percentages
-
-## 🔧 Customization
-
-### Adding New Skills
-Edit `src/types/index.js` to add new skills to the `availableSkills` array.
-
-### Styling Changes
-Modify `tailwind.config.js` for design system changes or `src/index.css` for custom component classes.
-
-### Mock Data
-Update mock data in `src/types/index.js` to change user profiles, matches, and chat data.
-
-## 🚀 Deployment
-
-### Build for Production
-```bash
-npm run build
-```
-
-### Deploy Options
-- **Vercel**: Connect GitHub repository for automatic deployments
-- **Netlify**: Drag and drop the `dist` folder
-- **AWS S3**: Upload build files to S3 bucket
-- **Any Static Host**: The app builds to static files
+### Modern UI/UX
+- **Responsive Design** - Works on all devices
+- **Dark/Light Mode** - Theme support
+- **Smooth Animations** - Enhanced user experience
+- **Accessibility** - WCAG compliant
 
 ## 🤝 Contributing
 
@@ -219,16 +109,4 @@ npm run build
 
 ## 📄 License
 
-This project is licensed under the ISC License.
-
-## 🙏 Acknowledgments
-
-- **Tailwind CSS** for the utility-first CSS framework
-- **Lucide** for the beautiful icon set
-- **React Community** for the amazing ecosystem
-- **Unsplash** for the sample user avatars
-
----
-
-Built with ❤️ using React and Tailwind CSS
-# skillswap-frontend
+This project is licensed under the MIT License.

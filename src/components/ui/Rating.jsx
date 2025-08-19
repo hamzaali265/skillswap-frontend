@@ -20,8 +20,18 @@ const Rating = ({
   };
 
   const handleClick = (rating) => {
+    console.log('Rating component - handleClick called with rating:', rating);
+    console.log('Rating component - readonly:', readonly);
+    console.log('Rating component - onChange function:', !!onChange);
+    
     if (!readonly && onChange) {
-      onChange(rating);
+      console.log('Rating component - calling onChange with rating:', rating);
+      // Add a small delay to ensure the click is registered
+      setTimeout(() => {
+        onChange(rating);
+      }, 10);
+    } else {
+      console.log('Rating component - click ignored (readonly or no onChange)');
     }
   };
 
@@ -57,6 +67,7 @@ const Rating = ({
               className={`transition-colors duration-200 ${
                 readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'
               }`}
+              aria-label={`Rate ${starValue} out of ${maxValue}`}
             >
               <Star
                 className={`${sizeClasses[size]} ${

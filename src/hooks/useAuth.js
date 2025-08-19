@@ -30,23 +30,41 @@ export const useAuth = () => {
             const response = await apiService.verifyToken();
             console.log('initializeAuth - verifyToken response:', response);
             
-            // Always fetch fresh user data from API
-            console.log('initializeAuth - fetching fresh user profile...');
-            const profileResponse = await apiService.getProfile();
-            console.log('initializeAuth - getProfile response:', profileResponse);
-            
-            if (profileResponse.data) {
-              console.log('initializeAuth - setting fresh user data:', profileResponse.data);
-              setUser(profileResponse.data);
-              setLocalStorage('skillswap_user', profileResponse.data);
+            // Use user data from verifyToken response if available
+            if (response.data && response.data.user) {
+              console.log('initializeAuth - using user data from verifyToken:', response.data.user);
+              setUser(response.data.user);
+              setLocalStorage('skillswap_user', response.data.user);
+            } else if (response.data) {
+              // If verifyToken returns user data directly
+              console.log('initializeAuth - using data from verifyToken:', response.data);
+              setUser(response.data);
+              setLocalStorage('skillswap_user', response.data);
             } else {
-              console.error('initializeAuth - no data in profile response');
-              removeLocalStorage('skillswap_user');
-              removeLocalStorage('skillswap_token');
-              setUser(null);
+              // Fallback: try to get profile separately
+              try {
+                console.log('initializeAuth - fetching fresh user profile...');
+                const profileResponse = await apiService.getProfile();
+                console.log('initializeAuth - getProfile response:', profileResponse);
+                
+                if (profileResponse.data) {
+                  console.log('initializeAuth - setting fresh user data:', profileResponse.data);
+                  setUser(profileResponse.data);
+                  setLocalStorage('skillswap_user', profileResponse.data);
+                } else {
+                  console.error('initializeAuth - no data in profile response');
+                  removeLocalStorage('skillswap_user');
+                  removeLocalStorage('skillswap_token');
+                  setUser(null);
+                }
+              } catch (profileError) {
+                console.warn('initializeAuth - getProfile failed, using saved user data:', profileError.message);
+                // Use saved user data if getProfile fails
+                setUser(savedUser);
+              }
             }
           } catch (err) {
-            console.error('initializeAuth - verifyToken or getProfile error:', err);
+            console.error('initializeAuth - verifyToken error:', err);
             removeLocalStorage('skillswap_user');
             removeLocalStorage('skillswap_token');
             setUser(null);
@@ -57,8 +75,6 @@ export const useAuth = () => {
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        removeLocalStorage('skillswap_user');
-        removeLocalStorage('skillswap_token');
         setUser(null);
       } finally {
         setLoading(false);
